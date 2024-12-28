@@ -127,24 +127,24 @@
                 </p>
               </div>
               <div class="framer-form-input-wrapper framer-form-select-wrapper framer-1s97ozf">
-                <select name="Location" required class="framer-form-input">
-                  <option value disabled selected>Select…</option>
-                  <option value="Thiruvananthapuram">Thiruvananthapuram</option>
-                  <option value="Kollam">Kollam</option>
-                  <option value="Pathanamthitta">Pathanamthitta</option>
-                  <option value="Alappuzha">Alappuzha</option>
-                  <option value="Kottayam">Kottayam</option>
-                  <option value="Idukki">Idukki</option>
-                  <option value="Ernakulam">Ernakulam</option>
-                  <option value="Thrissur">Thrissur</option>
-                  <option value="Palakkad">Palakkad</option>
-                  <option value="Malappuram">Malappuram</option>
-                  <option value="Kozhikode">Kozhikode</option>
-                  <option value="Wayanad">Wayanad</option>
-                  <option value="Kannur">Kannur</option>
-                  <option value="Kasaragod">Kasaragod</option>
+                <select name="Location" id="locationSelect" required class="framer-form-input">
+                    <option value disabled selected>Select…</option>
+                    <option value="Thiruvananthapuram">Thiruvananthapuram</option>
+                    <option value="Kollam">Kollam</option>
+                    <option value="Pathanamthitta">Pathanamthitta</option>
+                    <option value="Alappuzha">Alappuzha</option>
+                    <option value="Kottayam">Kottam</option>
+                    <option value="Idukki">Idukki</option>
+                    <option value="Ernakulam">Ernakulam</option>
+                    <option value="Thrissur">Thrissur</option>
+                    <option value="Palakkad">Palakkad</option>
+                    <option value="Malappuram">Malappuram</option>
+                    <option value="Kozhikode">Kozhikode</option>
+                    <option value="Wayanad">Wayanad</option>
+                    <option value="Kannur">Kannur</option>
+                    <option value="Kasaragod">Kasaragod</option>
                 </select>
-              </div></label
+            </div></label
             ><label class="framer-11bxvdw"
               ><div
                 class="framer-181mpju"
@@ -159,7 +159,7 @@
                 </p>
               </div>
               <div class="framer-form-input-wrapper framer-form-select-wrapper framer-zl9mwz">
-                <select name="Location" required class="framer-form-input">
+                <select name="Block" id = "blockSelect" required class="framer-form-input">
                   <option value disabled selected>Select…</option>
                   <option value="devikulam">Devikulam</option>
                   <option value="Thodupuzha">Thodupuzha</option>
@@ -235,5 +235,21 @@
       style="position: absolute; overflow: hidden; bottom: 0; left: 0; width: 0; height: 0; z-index: 0; contain: strict"
       aria-hidden="true"
     ></div>
+    <script>
+      let selectedLocation;
+      
+      document.getElementById('locationSelect').addEventListener('change', function() {
+          selectedLocation = this.value;
+          console.log('Selected location:', selectedLocation);
+      });
+  </script>
+    <script>
+      let selectedBlock;
+      
+      document.getElementById('blockSelect').addEventListener('change', function() {
+          selectedBlock = this.value;
+          console.log('Selected block:', selectedBlock);
+      });
+  </script>
   </body>
 </html>
