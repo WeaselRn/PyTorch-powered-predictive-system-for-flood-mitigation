@@ -9,89 +9,100 @@ app = Flask(__name__)
 # Folder to temporarily save uploaded files
 UPLOAD_FOLDER = "upload"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+
+@app.route('/')
+def home():
+    return render_template('midindex.html')
 
 # Initialize Groq client
 client = Groq(api_key="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")
 
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/predict', methods=['POST'])
-def predict():
+@app.route('/process-location', methods=['POST'])
+def process_location():
     try:
-        # Extract input data from the request
-        data = request.json
-        normal_rainfall = float(data['normal_rainfall'])
-        actual_rainfall = float(data['actual_rainfall'])
-        deviation = float(data['deviation'])
+        # Get the selected block value from the request (sent as JSON)
+        data = request.get_json()
+        selected_block = data.get('selectedBlock')
+        if not selected_block:
+            return jsonify({"error": "No block selected."}), 400
 
-        # Use Groq client to get predictions
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Predict flood risk with normal rainfall {normal_rainfall}, actual rainfall {actual_rainfall}, and deviation {deviation}"
-                }
-            ],
+        # Load the Excel sheet and find corresponding data
+        excel_path = os.path.join(UPLOAD_FOLDER, 'dataset.xlsx')  # Update path to your dataset
+        data = pd.read_excel(excel_path)
+
+        # Filter data for the selected block
+        block_data = data[data['Block'] == selected_block]
+        if block_data.empty:
+            return jsonify({"error": f"No data found for block '{selected_block}'."}), 404
+	grok_input = {
+        "normal_rainfall": block_data['Normal_Rainfall'].values[0],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[1],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[2],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[3],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[4],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[5],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[6],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[7],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[8],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[9],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[10],
+	    "normal_rainfall": block_data['Normal_Rainfall'].values[11],
+        "actual_rainfall": block_data['Actual_Rainfall'].values[0],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[1],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[2],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[3],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[4],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[5],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[6],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[7],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[8],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[9],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[10],
+	    "actual_rainfall": block_data['Normal_Rainfall'].values[11],
+        "deviation": block_data['Deviation'].values[0],
+	    "deviation": block_data['Deviation'].values[1],
+	    "deviation": block_data['Deviation'].values[2],
+	    "deviation": block_data['Deviation'].values[3],
+	    "deviation": block_data['Deviation'].values[4],
+	    "deviation": block_data['Deviation'].values[5],
+	    "deviation": block_data['Deviation'].values[6],
+	    "deviation": block_data['Deviation'].values[7],
+	    "deviation": block_data['Deviation'].values[8],
+	    "deviation": block_data['Deviation'].values[9],
+	    "deviation": block_data['Deviation'].values[10],
+	    "deviation": block_data['Deviation'].values[11],
+        }
+	chat_completion = client.chat.completions.create(
+            messages=[grok_input],
             model="llama3-8b-8192",
         )
+	prediction = chat_completion.choices[0].message.content
+	# Save the prediction to a new Excel sheet
+        output_path = os.path.join(OUTPUT_FOLDER, 'results.xlsx')
+        block_data['Prediction'] = prediction
+        block_data.to_excel(output_path, index=False)
 
-        prediction = chat_completion.choices[0].message.content
-
-        return jsonify({"prediction": prediction})  # Send the prediction back to the frontend
-    except Exception as e:
-        return jsonify({"error": "An error occurred while processing the request", "details": str(e)}), 400
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    try:
-        # Check if the file is present
-        if 'file' not in request.files:
-            return jsonify({"error": "No file uploaded"}), 400
-
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
-
-        # Save the uploaded file
-        file_path = os.path.join(app.config[upload], dataset_idukki.xlsx)
-        file.save(file_path)
-
-        # Read the Excel file
-        data = pd.read_excel(file_path)
-
-        # Extract relevant columns (update column names as needed)
-        relevant_data = data[['Normal (mm)', 'Actual (mm)', 'Deviation %']]
-
-        # Prepare predictions using Groq API
-        predictions = []
-        for _, row in relevant_data.iterrows():
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"Predict flood risk with normal rainfall {row['Normal (mm)']}, actual rainfall {row['Actual (mm)']}, and deviation {row['Deviation %']}"
-                    }
-                ],
-                model="llama3-8b-8192",
-            )
-
-            prediction = chat_completion.choices[0].message.content
-            predictions.append(prediction)
-
-        # Add predictions to the original data
-        data['Flood_Risk_Prediction'] = predictions
-
-        # Save the updated file with predictions
-        output_path = os.path.join(app.config[upload], "predictions_with_data.xlsx")
-        data.to_excel(output_path, index=False)
-
-        return jsonify({"message": "File processed successfully", "output_file": output_path})
+        # Return success response
+        return jsonify({"message": "Prediction generated successfully.", "prediction": prediction})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/results')
+def results():
+    try:
+        # Load the results Excel sheet
+        output_path = os.path.join(OUTPUT_FOLDER, 'results.xlsx')
+        results_data = pd.read_excel(output_path)
+
+        # Render results in HTML
+        return "<h1>Flood Prediction Results</h1>" + results_data.to_html(index=False, classes='table table-bordered')
+
+    except Exception as e:
+        return f"<h1>Error: {str(e)}</h1>"
 
 if __name__ == '__main__':
     app.run(debug=True)
